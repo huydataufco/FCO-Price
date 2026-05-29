@@ -1,35 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FCO App</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 15px;
+      background: #f4f6f9;
+    }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      margin: auto;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    #msg {
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h3>Nhập giá cầu thủ</h3>
+
+  <input id="name" placeholder="Tên cầu thủ">
+
+  <select id="season"></select>
+
+  <select id="level"></select>
+
+  <input id="price" placeholder="Giá">
+
+  <select id="type">
+    <option value="">Chọn loại</option>
+    <option value="min">min</option>
+    <option value="max">max</option>
+  </select>
+
+  <input type="date" id="date">
+
+  <button onclick="send()">Submit</button>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+
 const API = "https://script.google.com/macros/s/AKfycbyBDJVLT27xB600dXw1Daffos3ePE_-HJGRZSdXPtFJ1P7GvZCXfmJ-okUU94cg2g9K/exec";
 
-/******** ✅ LOAD INIT ********/
+/******** ✅ LOAD DATA (iframe fix) ********/
 function loadInit(){
 
   const iframe = document.createElement("iframe");
   iframe.style.display = "none";
 
-  window.addEventListener("message", function handler(e){
+  function handler(e){
     window.removeEventListener("message", handler);
 
     const data = e.data;
 
     console.log("INIT:", data);
 
-    season.innerHTML = "";
-    level.innerHTML = "";
+    const seasonEl = document.getElementById("season");
+    const levelEl = document.getElementById("level");
 
-    (data.seasons || []).forEach(x=>{
-      season.add(new Option(x,x));
+    // reset
+    seasonEl.innerHTML = "";
+    levelEl.innerHTML = "";
+
+    // load season
+    (data.seasons || []).forEach(s=>{
+      seasonEl.add(new Option(s, s));
     });
 
+    // load level
     for(let i=1;i<=13;i++){
-      level.add(new Option(i,i));
+      levelEl.add(new Option(i, i));
     }
 
     document.body.removeChild(iframe);
-  });
+  }
+
+  window.addEventListener("message", handler);
 
   iframe.src = API + "?action=init&t=" + Date.now();
+
   document.body.appendChild(iframe);
 }
+
 
 /******** ✅ SUBMIT ********/
 function send(){
@@ -37,17 +123,25 @@ function send(){
   const iframe = document.createElement("iframe");
   iframe.style.display = "none";
 
-  window.addEventListener("message", function handler(e){
+  function handler(e){
     window.removeEventListener("message", handler);
 
     const res = e.data;
 
-    msg.innerText = res.status === "duplicate"
-      ? "❌ Trùng"
-      : "✅ OK";
+    console.log("SUBMIT:", res);
+
+    if(res.status === "duplicate"){
+      msg.innerText = "❌ Trùng dữ liệu";
+    } else if(res.status === "ok"){
+      msg.innerText = "✅ Thành công";
+    } else {
+      msg.innerText = "❌ Lỗi";
+    }
 
     document.body.removeChild(iframe);
-  });
+  }
+
+  window.addEventListener("message", handler);
 
   iframe.src = API + "?action=submit"
     + "&name=" + encodeURIComponent(name.value)
@@ -61,5 +155,11 @@ function send(){
   document.body.appendChild(iframe);
 }
 
-/******** ✅ START ********/
+
+/******** ✅ AUTO LOAD ********/
 window.onload = loadInit;
+
+</script>
+
+</body>
+</html>
