@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FCO App</title>
+
+<style>
+body{font-family:Arial;padding:15px;background:#f4f6f9}
+.card{background:#fff;padding:20px;border-radius:10px;max-width:400px;margin:auto}
+input,select{width:100%;padding:10px;margin:5px 0}
+button{width:100%;padding:12px;background:#007bff;color:#fff;border:none}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h3>Nhập giá cầu thủ</h3>
+
+<input id="name" placeholder="Tên">
+<select id="season"></select>
+<select id="level"></select>
+<input id="price" placeholder="Giá">
+<select id="type">
+<option>min</option>
+<option>max</option>
+</select>
+<input type="date" id="date">
+
+<button onclick="send()">Submit</button>
+
+<p id="msg"></p>
+</div>
+
+<script>
+
+// ✅ API của bạn
+const API = "https://script.google.com/macros/s/AKfycbyBDJVLT27xB600dXw1Daffos3ePE_-HJGRZSdXPtFJ1P7GvZCXfmJ-okUU94cg2g9K/exec";
+
+fetch(API + "?action=init")
+.then(r=>r.json())
+.then(d=>{
+  d.seasons.forEach(x=>season.add(new Option(x,x)));
+  for(let i=1;i<=13;i++)level.add(new Option(i,i));
+});
+
+function send(){
+  const url = API + "?action=submit"
+    + "&name=" + encodeURIComponent(name.value)
+    + "&season=" + season.value
+    + "&level=" + level.value
+    + "&price=" + price.value
+    + "&type=" + type.value
+    + "&date=" + date.value;
+
+  fetch(url)
+  .then(r=>r.json())
+  .then(res=>{
+    msg.innerText = res.status === 'duplicate' ? "❌ Trùng" : "✅ OK";
+  });
+}
+</script>
+
+</body>
+</html>
+``
