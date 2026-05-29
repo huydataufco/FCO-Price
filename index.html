@@ -34,31 +34,74 @@ button{width:100%;padding:12px;background:#007bff;color:#fff;border:none}
 
 <script>
 
-// ✅ API của bạn
 const API = "https://script.google.com/macros/s/AKfycbyBDJVLT27xB600dXw1Daffos3ePE_-HJGRZSdXPtFJ1P7GvZCXfmJ-okUU94cg2g9K/exec";
 
-fetch(API + "?action=init")
-.then(r=>r.json())
-.then(d=>{
-  d.seasons.forEach(x=>season.add(new Option(x,x)));
-  for(let i=1;i<=13;i++)level.add(new Option(i,i));
+/******** ✅ JSONP FUNCTION ********/
+function loadJSONP(url, callbackName) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+
+    window[callbackName] = function(data) {
+      resolve(data);
+      document.body.removeChild(script);
+      delete window[callbackName];
+    };
+
+    script.src = url + "&callback=" + callbackName;
+    script.onerror = reject;
+
+    document.body.appendChild(script);
+  });
+}
+
+/******** ✅ LOAD DATA ********/
+loadJSONP(API + "?action=init&t=" + Date.now(), "cbInit")
+.then(data => {
+
+  console.log("DATA:", data);
+
+  season.innerHTML = "";
+  level.innerHTML = "";
+
+  (data.seasons || []).forEach(x=>{
+    season.add(new Option(x,x));
+  });
+
+  for(let i=1;i<=13;i++){
+    level.add(new Option(i,i));
+  }
+
+})
+.catch(err=>{
+  console.error("LOAD ERROR:", err);
 });
 
+/******** ✅ SUBMIT ********/
 function send(){
+
   const url = API + "?action=submit"
     + "&name=" + encodeURIComponent(name.value)
     + "&season=" + season.value
     + "&level=" + level.value
     + "&price=" + price.value
     + "&type=" + type.value
-    + "&date=" + date.value;
+    + "&date=" + date.value
+    + "&t=" + Date.now();
 
-  fetch(url)
-  .then(r=>r.json())
-  .then(res=>{
-    msg.innerText = res.status === 'duplicate' ? "❌ Trùng" : "✅ OK";
+  loadJSONP(url, "cbSubmit")
+  .then(res => {
+
+    msg.innerText = res.status === 'duplicate'
+      ? "❌ Trùng"
+      : "✅ OK";
+
+  })
+  .catch(err => {
+    msg.innerText = "❌ Lỗi kết nối";
+    console.error(err);
   });
 }
+
 </script>
 
 </body>
