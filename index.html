@@ -1,52 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FCO App</title>
-
-<style>
-body{font-family:Arial;padding:15px;background:#f4f6f9}
-.card{background:#fff;padding:20px;border-radius:10px;max-width:400px;margin:auto}
-input,select{width:100%;padding:10px;margin:5px 0}
-button{width:100%;padding:12px;background:#007bff;color:#fff;border:none}
-</style>
-</head>
-
-<body>
-
-<div class="card">
-<h3>Nhập giá cầu thủ</h3>
-
-<input id="name" placeholder="Tên">
-<select id="season"></select>
-<select id="level"></select>
-<input id="price" placeholder="Giá">
-<select id="type">
-<option>min</option>
-<option>max</option>
-</select>
-<input type="date" id="date">
-
-<button onclick="send()">Submit</button>
-
-<p id="msg"></p>
-</div>
-
-<script>
-
 const API = "https://script.google.com/macros/s/AKfycbyBDJVLT27xB600dXw1Daffos3ePE_-HJGRZSdXPtFJ1P7GvZCXfmJ-okUU94cg2g9K/exec";
 
-/******** ✅ JSONP FUNCTION ********/
-function loadJSONP(url, callbackName) {
+/******** ✅ JSONP FIX CỨNG ********/
+function jsonp(url) {
   return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
+
+    const callbackName = 'cb_' + Date.now();
 
     window[callbackName] = function(data) {
       resolve(data);
-      document.body.removeChild(script);
       delete window[callbackName];
+      script.remove();
     };
 
+    const script = document.createElement('script');
     script.src = url + "&callback=" + callbackName;
     script.onerror = reject;
 
@@ -54,27 +20,38 @@ function loadJSONP(url, callbackName) {
   });
 }
 
-/******** ✅ LOAD DATA ********/
-loadJSONP(API + "?action=init&t=" + Date.now(), "cbInit")
-.then(data => {
+/******** ✅ LOAD INIT ********/
+function loadInit(){
 
-  console.log("DATA:", data);
+  jsonp(API + "?action=init&t=" + Date.now())
+  .then(data => {
 
-  season.innerHTML = "";
-  level.innerHTML = "";
+    console.log("INIT DATA:", data);
 
-  (data.seasons || []).forEach(x=>{
-    season.add(new Option(x,x));
+    const seasonEl = document.getElementById("season");
+    const levelEl = document.getElementById("level");
+
+    // clear
+    seasonEl.innerHTML = "";
+    levelEl.innerHTML = "";
+
+    // ✅ season
+    if(data.seasons){
+      data.seasons.forEach(x=>{
+        seasonEl.add(new Option(x,x));
+      });
+    }
+
+    // ✅ level
+    for(let i=1;i<=13;i++){
+      levelEl.add(new Option(i,i));
+    }
+
+  })
+  .catch(err=>{
+    console.error("INIT FAIL:", err);
   });
-
-  for(let i=1;i<=13;i++){
-    level.add(new Option(i,i));
-  }
-
-})
-.catch(err=>{
-  console.error("LOAD ERROR:", err);
-});
+}
 
 /******** ✅ SUBMIT ********/
 function send(){
@@ -88,22 +65,17 @@ function send(){
     + "&date=" + date.value
     + "&t=" + Date.now();
 
-  loadJSONP(url, "cbSubmit")
-  .then(res => {
-
+  jsonp(url)
+  .then(res=>{
     msg.innerText = res.status === 'duplicate'
       ? "❌ Trùng"
       : "✅ OK";
-
   })
-  .catch(err => {
-    msg.innerText = "❌ Lỗi kết nối";
+  .catch(err=>{
+    msg.innerText = "❌ Lỗi";
     console.error(err);
   });
 }
 
-</script>
-
-</body>
-</html>
-``
+/******** ✅ AUTO LOAD ********/
+window.onload = loadInit;
